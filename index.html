@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FORE!STROKE Practice App</title>
+<style>
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b3d2e;color:#fff;margin:0;padding:20px}
+body.flash-green{animation:flashGreen .15s ease-in-out}
+body.flash-red{animation:flashRed .15s ease-in-out}
+
+@keyframes flashGreen{from{background:#0b3d2e}to{background:#145a43}}
+@keyframes flashRed{from{background:#0b3d2e}to{background:#6b2a2a}}
+
+.card{background:#145a43;border-radius:14px;padding:20px;max-width:960px;margin:0 auto;box-shadow:0 10px 25px rgba(0,0,0,.3)}
+h1,h2,h3{text-align:center;margin:0 0 10px}
+h1{font-size:34px;letter-spacing:.04em}
+
+.pill-row{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px}
+.pill-btn{background:#1c7c5b;border:none;padding:10px 20px;border-radius:999px;font-weight:800;color:#fff;cursor:pointer;white-space:nowrap;font-size:20px}
+.pill-btn.active{background:#2ecc71;color:#000}
+.pill-btn:disabled{cursor:default;opacity:1}
+
+.range-speed{display:flex;align-items:center;gap:2px;background:#1c7c5b;padding:6px;border-radius:999px}
+.range-speed-value{min-width:74px;text-align:center;font-size:18px;font-weight:800}
+.range-temp-value{min-width:68px}
+.range-temp-stepper{gap:0;padding:6px 4px}
+.range-speed-btn{border:none;border-radius:999px;background:#2ecc71;color:#000;font-size:22px;font-weight:800;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 0 #1e9e54}
+
+.mode-card{margin-bottom:14px;padding:12px;border-radius:12px;background:#0e4f3a}
+.mode-row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;width:100%}
+.mode-row.equal-buttons{flex-wrap:nowrap}
+.mode-row.equal-buttons .mode-btn{flex:1;min-width:0}
+.mode-btn{width:100%;display:block;border:none;border-radius:12px;padding:10px 20px;font-size:20px;font-weight:800;cursor:pointer;background:#8a8a8a;color:#000;white-space:normal;line-height:1.15;text-align:center;box-shadow:0 4px 0 #666}
+.mode-btn.active{background:#2ecc71;box-shadow:0 4px 0 #1e9e54}
+.mode-btn.target-set-btn{background:#2ecc71;box-shadow:0 4px 0 #1e9e54}
+.mode-btn.target-set-btn.range-active{background:#1d5b86;color:#fff;box-shadow:0 5px 0 #154462}
+.mode-btn:disabled{cursor:default;opacity:1}
+.mode-target{margin:10px 0 14px;padding:10px;border-radius:10px;background:#1c7c5b;font-size:24px;font-weight:800;text-align:center}
+
+.interface-window{background:#0e4f3a;border-radius:14px;padding:0;overflow:hidden;margin:14px 0}
+.tracker-grid{display:flex;flex-wrap:wrap;gap:0;align-items:flex-start;justify-content:stretch;width:100%}
+.tracker-panel{background:#145a43;border-radius:0;padding:0;display:flex;justify-content:center;align-items:center;overflow:hidden;flex:1 1 320px}
+.accuracy-shell{width:256.5px;height:256.5px;display:flex;align-items:center;justify-content:center;margin:0}
+.contact-shell{width:256.5px;height:174.6px;display:flex;align-items:center;justify-content:center;margin:6px}
+
+.accuracy-ring{width:256.5px;height:256.5px;border-radius:50%;position:relative;margin:0;transform:rotate(45deg);transform-origin:center}
+.accuracy-ring::before,.accuracy-ring::after{content:"";position:absolute;background:#000;opacity:.9;pointer-events:none;z-index:4}
+.accuracy-ring::before{width:2px;height:100%;left:50%;top:0;transform:translateX(-50%) rotate(45deg)}
+.accuracy-ring::after{width:2px;height:100%;left:50%;top:0;transform:translateX(-50%) rotate(-45deg)}
+.accuracy-wedge{position:absolute;inset:0;border:none;border-radius:50%;background:#E34234;cursor:pointer;z-index:1;-webkit-mask:radial-gradient(circle at center,transparent 0 49.5px,black 50.4px);mask:radial-gradient(circle at center,transparent 0 49.5px,black 50.4px)}
+.accuracy-wedge:hover{filter:brightness(1.1)}
+.accuracy-wedge:active{transform:scale(.97);filter:brightness(.95)}
+.accuracy-wedge.selected{background:#f06e63;box-shadow:inset 0 0 0 5.4px rgba(255,255,255,.55),0 0 0 3.6px rgba(255,255,255,.16)}
+.accuracy-topright{clip-path:polygon(50% 50%,0% 0%,100% 0%)}
+.accuracy-bottomleft{clip-path:polygon(50% 50%,100% 100%,0% 100%)}
+.accuracy-topleft{clip-path:polygon(50% 50%,0% 100%,0% 0%)}
+.accuracy-bottomright{clip-path:polygon(50% 50%,100% 0%,100% 100%)}
+.accuracy-label-top,.accuracy-label-bottom,.accuracy-label-left,.accuracy-label-right{position:absolute;font-weight:800;color:#000;font-size:21.6px;line-height:1.05;z-index:5;pointer-events:none}
+.accuracy-label-top{top:9px;left:50%;transform:translateX(-50%)}
+.accuracy-label-bottom{bottom:9px;left:50%;transform:translateX(-50%)}
+.accuracy-label-left{left:9px;top:50%;transform:translateY(-50%) rotate(-90deg)}
+.accuracy-label-right{right:9px;top:50%;transform:translateY(-50%) rotate(270deg)}
+.accuracy-made{width:99px;height:99px;border:none;border-radius:50%;background:#2ecc71;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:21.6px;font-weight:800;color:#000;box-shadow:2.7px 0 0 #1e9e54,0 2.7px 0 #1e9e54,0 9px 18px rgba(0,0,0,.35);border-bottom:2.7px solid #1e9e54;border-right:2.7px solid #1e9e54;cursor:pointer;text-align:center;line-height:1.1;position:absolute;top:50%;left:50%;transform:translate(calc(-50% - 3.6px),-52%) rotate(-45deg);z-index:6}
+.accuracy-made.selected{box-shadow:0 0 0 5.4px rgba(255,255,255,.4),2.7px 0 0 #1e9e54,0 2.7px 0 #1e9e54,0 9px 18px rgba(0,0,0,.35)}
+.accuracy-made:active{transform:translate(calc(-50% - 3.6px),-52%) rotate(-45deg) translateY(2.7px) scale(.97);box-shadow:.9px 0 0 #1e9e54,0 .9px 0 #1e9e54,0 5.4px 10.8px rgba(0,0,0,.35)}
+
+.contact-ring{width:285px;height:194px;position:relative;margin:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr .7fr;overflow:hidden;border-radius:54px 40px 34px 62px;clip-path:polygon(8% 0,100% 28%,100% 100%,4% 100%,0 96%,0 10%,2% 3%);background:linear-gradient(180deg,rgba(255,255,255,.62) 0%,rgba(255,255,255,.16) 20%,rgba(0,0,0,.08) 100%),repeating-linear-gradient(180deg,transparent 0 17px,rgba(102,112,122,.22) 17px 19px),linear-gradient(145deg,#f8fbfd 0%,#e0e7ee 24%,#c0cad4 58%,#f5f8fb 100%);border:6px solid #d2dbe3;box-shadow:inset 0 0 0 2px rgba(255,255,255,.6),inset 0 -12px 16px rgba(84,95,107,.24),0 14px 28px rgba(0,0,0,.28);transform:scale(.9);transform-origin:center}
+.contact-ring::before,.contact-ring::after{content:"";position:absolute;pointer-events:none}
+.contact-ring::before{left:22.8px;top:-3px;width:267.81px;height:6px;background:#d2dbe3;border-radius:999px;transform-origin:left center;transform:rotate(11.74deg);z-index:3}
+.contact-ring::after{inset:0;background:linear-gradient(rgba(48,55,64,.78),rgba(48,55,64,.78)) 50% 0/2px 100% no-repeat,linear-gradient(rgba(48,55,64,.78),rgba(48,55,64,.78)) 0 58.824%/100% 2px no-repeat;z-index:4}
+.contact-wedge{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.18) 0%,rgba(166,176,186,.08) 100%);cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;color:#1d242b;font-size:20px;line-height:1.05;letter-spacing:.06em;text-shadow:0 1px 0 rgba(255,255,255,.72);overflow:hidden;border:none}
+.contact-wedge:hover{filter:brightness(1.1)}
+.contact-wedge:active{transform:scale(.97) translateY(3px);filter:brightness(.95)}
+.contact-wedge.selected{box-shadow:inset 0 0 0 6px rgba(46,204,113,.6)}
+.contact-label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:100%;text-align:center}
+.contact-label span{font-size:21.6px;letter-spacing:0;line-height:1.05;color:#000;text-shadow:none}
+.contact-topleft .contact-label,.contact-topright .contact-label{transform:translateY(18px)}
+.toe-label{transform:translateX(-16px)}
+.heel-label{transform:translateX(22px)}
+.contact-topleft{grid-column:1;grid-row:1;border-top-left-radius:42px 34px;clip-path:inset(0 round 42px 0 0 0);margin-left:-12px;padding-left:12px}
+.contact-topright{grid-column:2;grid-row:1;border-top-right-radius:26px 20px;clip-path:inset(0 round 0 26px 0 0)}
+.contact-bottomleft{grid-column:1;grid-row:2;border-bottom-left-radius:48px 38px;clip-path:inset(0 round 0 0 0 48px);margin-left:-12px;padding-left:12px}
+.contact-bottomright{grid-column:2;grid-row:2;border-bottom-right-radius:28px 22px;clip-path:inset(0 round 0 0 28px 0)}
+.contact-made-wrap{position:absolute;inset:0;z-index:5;pointer-events:none}
+.contact-made{width:99px;height:99px;border:none;border-radius:50%;background:#2ecc71;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:19px;font-weight:800;color:#000;box-shadow:3px 0 0 #1e9e54,0 3px 0 #1e9e54,0 10px 20px rgba(0,0,0,.35);border-bottom:3px solid #1e9e54;border-right:3px solid #1e9e54;cursor:pointer;text-align:center;line-height:1.05;position:absolute;top:58.824%;left:50%;transform:translate(-50%,-50%);z-index:5;pointer-events:auto;padding:0 8px}
+.contact-made.selected{box-shadow:0 0 0 6px rgba(255,255,255,.4),3px 0 0 #1e9e54,0 3px 0 #1e9e54,0 10px 20px rgba(0,0,0,.35)}
+.contact-made:active{transform:translate(-50%,-50%) translateY(3px) scale(.97);box-shadow:1px 0 0 #1e9e54,0 1px 0 #1e9e54,0 6px 12px rgba(0,0,0,.35)}
+
+button:active:not(.accuracy-made):not(.contact-made):not(.accuracy-wedge):not(.contact-wedge){transform:translateY(3px) scale(.98);box-shadow:0 2px 0 rgba(0,0,0,.35)!important}
+
+.stats{text-align:center;font-size:18px;margin-top:16px}
+.stats p{margin:6px 0}
+.stats-panel{margin-top:10px;padding:12px 14px 14px;border-radius:14px;background:#0e4f3a}
+.combined-stats{margin-top:0;padding-top:0}
+.subtle{opacity:.75;font-size:14px}
+
+.mishit-panel{margin-top:10px;padding:14px;border-radius:12px;background:#1c7c5b}
+
+.mishit-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:100%;margin-top:0}
+.mishit-btn{width:100%;min-height:58px;display:flex;align-items:center;justify-content:center;color:#000;border:none;border-radius:12px;padding:6px 10px;font-size:20px;font-weight:800;line-height:1.1;box-shadow:0 6px 0 rgba(0,0,0,.25),0 10px 18px rgba(0,0,0,.25);cursor:pointer}
+.skull-btn{background:#f4a261;box-shadow:0 6px 0 #c57f3d,0 10px 18px rgba(0,0,0,.25)}
+.duff-btn{background:#e9c46a;box-shadow:0 6px 0 #b89445,0 10px 18px rgba(0,0,0,.25)}
+.shank-btn{background:#8b5a2b;color:#fff;box-shadow:0 8px 0 #5f3d1c,0 10px 18px rgba(0,0,0,.25)}
+
+.badge{margin-top:10px;padding:10px;border-radius:10px;background:#0e4f3a;font-size:20px;font-weight:800}
+.badge.manual-badge{font-size:20px;font-weight:800}
+.badge.random-badge{background:#1d5b86;color:#fff}
+.badge-content{text-align:center}
+.random-total-line{font-weight:400}
+
+.session-actions{display:flex;justify-content:space-between;gap:16px;margin-top:16px;width:100%;position:relative;z-index:20;pointer-events:auto}
+.action-btn{flex:1;color:#000;padding:8px 10px;font-size:20px;font-weight:800;border:none;border-radius:12px;cursor:pointer;position:relative;z-index:21;pointer-events:auto;touch-action:manipulation}
+.new-session-btn{background:#0096FF;box-shadow:0 6px 0 #0074c7,0 14px 22px rgba(0,0,0,.45)}
+.undo-btn{background:#8a8a8a;box-shadow:0 6px 0 #666,0 14px 22px rgba(0,0,0,.45)}
+
+.history-header{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.history-card{padding:10px;background:#1c7c5b;border-radius:10px;cursor:pointer}
+.history-wrapper{margin-bottom:10px}
+.accordion{display:none;margin-top:8px;padding:10px;background:#0e4f3a;border-radius:10px}
+.history-block{margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.12)}
+.history-block:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+
+@media (max-width:840px){
+ .session-actions{flex-direction:column}
+ .accuracy-label-left{transform:translateY(-50%) rotate(-90deg)}
+ .accuracy-label-right{transform:translateY(-50%) rotate(270deg)}
+}
+
+@media (orientation:landscape){
+ .tracker-grid{flex-wrap:nowrap;align-items:stretch}
+ .tracker-panel{align-self:stretch}
+}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>FORE!STROKE</h1>
+
+<div class="mode-card">
+<div class="mode-row equal-buttons">
+<button id="practiceModeBtn" class="mode-btn" onclick="togglePracticeMode()">Manual<br>Mode On</button>
+<button id="targetSetBtn" class="mode-btn target-set-btn" onclick="toggleTargetSetMode()">Wedge<br>Mode On</button>
+</div>
+</div>
+
+<div id="clubRow" class="pill-row"></div>
+<div id="distanceRow" class="pill-row"></div>
+<div id="modeTarget" class="mode-target">Current Shot:</div>
+
+<div class="interface-window">
+<div class="tracker-grid">
+<div class="tracker-panel">
+<div class="accuracy-shell">
+<div class="accuracy-ring">
+<button id="accuracy-longRight" class="accuracy-wedge accuracy-topright" type="button" onclick="recordMissed('longRight')"></button>
+<button id="accuracy-shortLeft" class="accuracy-wedge accuracy-bottomleft" type="button" onclick="recordMissed('shortLeft')"></button>
+<button id="accuracy-longLeft" class="accuracy-wedge accuracy-topleft" type="button" onclick="recordMissed('longLeft')"></button>
+<button id="accuracy-shortRight" class="accuracy-wedge accuracy-bottomright" type="button" onclick="recordMissed('shortRight')"></button>
+<span class="accuracy-label-top">Long<br>Right</span>
+<span class="accuracy-label-bottom">Short<br>Left</span>
+<span class="accuracy-label-left">Long<br>Left</span>
+<span class="accuracy-label-right">Short<br>Right</span>
+<button id="accuracy-made" class="accuracy-made" type="button" onclick="recordMade()">MADE</button>
+</div>
+</div>
+</div>
+
+<div class="tracker-panel">
+<div class="contact-shell">
+<div class="contact-ring">
+<button id="contact-highToe" class="contact-wedge contact-topleft" type="button" onclick="recordContactMissed('highToe')"><span class="contact-label"><span class="toe-label">High</span><span class="toe-label">Toe</span></span></button>
+<button id="contact-highHeel" class="contact-wedge contact-topright" type="button" onclick="recordContactMissed('highHeel')"><span class="contact-label"><span class="heel-label">High</span><span class="heel-label">Heel</span></span></button>
+<button id="contact-lowToe" class="contact-wedge contact-bottomleft" type="button" onclick="recordContactMissed('lowToe')"><span class="contact-label"><span class="toe-label">Low</span><span class="toe-label">Toe</span></span></button>
+<button id="contact-lowHeel" class="contact-wedge contact-bottomright" type="button" onclick="recordContactMissed('lowHeel')"><span class="contact-label"><span class="heel-label">Low</span><span class="heel-label">Heel</span></span></button>
+<div class="contact-made-wrap">
+<button id="contact-made" class="contact-made" type="button" onclick="recordContactMade()">SWEET SPOT</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+
+<div class="mishit-panel">
+<div class="mishit-row">
+<button class="mishit-btn duff-btn" type="button" onclick="recordDuff()">💩 Duff</button>
+<button class="mishit-btn shank-btn" type="button" onclick="recordShank()">🤬 Shank</button>
+<button class="mishit-btn skull-btn" type="button" onclick="recordSkull()">💀 Skull</button>
+</div>
+</div>
+
+<div class="stats-panel">
+<div class="stats combined-stats">
+<p>✅ Made: <span id="statsMade">0</span> | ⛔ Missed: <span id="statsMissed">0</span></p>
+<p>🟢 Center: <span id="statsCenter">0</span> | 🚫 Off-Center: <span id="statsOffCenter">0</span></p>
+<p>🚩 Make %: <span id="statsMakePercent">0</span>% | 💥 Flush %: <span id="statsFlushPercent">0</span>%</p>
+<p><span id="statsStreakTitle">Streak</span>: <span id="statsStreak">0</span> <span id="statsStreakLabel"></span></p>
+<p>Duffs: <span id="statsDuffs">0</span><span id="statsDuffMarks"></span> | Shanks: <span id="statsShanks">0</span><span id="statsShankMarks"></span> | Skulls: <span id="statsSkulls">0</span><span id="statsSkullMarks"></span></p>
+</div>
+</div>
+
+<div id="targetBadge" class="badge manual-badge"></div>
+
+<div class="session-actions">
+<button id="newSessionBtn" class="action-btn new-session-btn" type="button" onclick="newSession()">🔄️ New Session</button>
+<button id="undoBtn" class="action-btn undo-btn" type="button" onclick="undoShot()">↩️ Undo Last Shot</button>
+</div>
+
+<div class="history-header">
+<h3 style="margin:0">📜Session History</h3>
+<select id="historyAction" onchange="handleHistoryAction()" style="background:#1c7c5b;color:#fff;border:none;border-radius:8px;padding:6px 8px;font-weight:700">
+<option value="">Actions</option>
+<option value="export">📤Export All History</option>
+<option value="delete">📵Clear All History</option>
+</select>
+</div>
+
+<div id="history"><p style="opacity:.8">No sessions yet.</p></div>
+</div>
+
+<script>
+const APP_STORAGE_PREFIX="FORE_STROKE"
+const WEDGE_CLUBS=["62 deg","60 deg","58 deg","56 deg","54 deg","52 deg","UW","48 deg","PW"]
+const WEDGE_DISTANCES=[10,15,20,25,30,35,40,45,50,55,60,65,70,75,80]
+const RANGE_CLUBS=["62 deg","60 deg","58 deg","56 deg","54 deg","52 deg","UW","48 deg","PW","9i","8i","7i","6i","5i","4i","3i","4h","5h","4w","Driver"]
+const RANGE_MANUAL_CLUBS=["62 deg","60 deg","58 deg","56 deg","54 deg","52 deg","UW","48 deg","PW","9i","8i","7i","6i","5i","4i","3i","5h","4h","4w","Driver"]
+const RANGE_DISTANCES=Array.from({length:176},(_,i)=>85+i)
+const RANGE_DISTANCE_MIN=RANGE_DISTANCES[0]
+const RANGE_DISTANCE_MAX=RANGE_DISTANCES[RANGE_DISTANCES.length-1]
+const RANGE_CARRY_YARDAGES={
+ "62 deg":80,"60 deg":85,"58 deg":95,"56 deg":100,"54 deg":105,"52 deg":110,"UW":115,"48 deg":120,"PW":130,
+ "9i":140,"8i":150,"7i":160,"6i":170,"5i":180,"4i":190,"3i":200,"5h":205,"4h":215,"3h":225,"4w":235,"Driver":250
+}
+const RANGE_RECOMMENDATION_WINDOW=5
+const ALL_CLUBS=["62 deg","60 deg","58 deg","56 deg","54 deg","52 deg","UW","48 deg","PW","9i","8i","7i","6i","5i","4i","3i","3h","4h","5h","4w","5w","3w","Driver"]
+const RANGE_WIND_ADJUSTMENTS={wedge:{head:0.02,tail:0.01},iron:{head:0.025,tail:0.015},woodHybrid:{head:0.03,tail:0.025}}
+const RANGE_DEFAULT_TEMP=70
+const RANGE_TEMP_MIN=50
+const RANGE_TEMP_MAX=100
+const RANGE_TEMP_STEP=5
+const RANGE_TEMP_ADJUSTMENTS={wedge:0.007,iron:0.01,woodHybrid:0.013}
+const ALL_DISTANCES=Array.from({length:RANGE_DISTANCE_MAX-WEDGE_DISTANCES[0]+1},(_,i)=>WEDGE_DISTANCES[0]+i)
+const MODE_CONFIG={wedge:{clubs:WEDGE_CLUBS,distances:WEDGE_DISTANCES,defaultClub:"56 deg",defaultDistance:25},range:{clubs:RANGE_CLUBS,distances:RANGE_DISTANCES,defaultClub:"9i",defaultDistance:135}}
+const PGA_PROXIMITY={10:6,15:8,20:10,25:12,30:15,35:18,40:21,45:24,50:27,55:30,60:33,65:36,70:39,75:42,80:45}
+const UP_AND_DOWN={10:67,15:60,20:53,25:46,30:40,35:35,40:30,45:27,50:25,55:23,60:20,65:18,70:16,75:14,80:12}
+const DEFAULT_TARGET_SET_MODE="wedge"
+const TARGET_SET_MODES=["wedge","range"]
+const DEFAULT_CLUB=MODE_CONFIG.wedge.defaultClub
+const PRACTICE_MODE_KEY=APP_STORAGE_PREFIX+"_practiceMode"
+const TARGET_SET_MODE_KEY=APP_STORAGE_PREFIX+"_targetSetMode"
+const RANGE_WIND_SPEED_KEY=APP_STORAGE_PREFIX+"_rangeWindSpeed"
+const RANGE_TEMP_KEY=APP_STORAGE_PREFIX+"_rangeTemp"
+const SHOT_HISTORY_KEY=APP_STORAGE_PREFIX+"_shotHistory"
+const SELECTION_STATE_KEY=APP_STORAGE_PREFIX+"_selectionState"
+const SESSIONS_KEY=APP_STORAGE_PREFIX+"_sessions"
+
+const TRACKERS={
+ accuracy:{
+  title:"Accuracy",
+  goodLabel:"Made",
+  missLabel:"Missed",
+  percentLabel:"Make %",
+  missKeys:["longLeft","longRight","shortLeft","shortRight"],
+  missLabels:{longLeft:"Long Left",longRight:"Long Right",shortLeft:"Short Left",shortRight:"Short Right"},
+  dom:{
+   made:"accuracyMade",missed:"accuracyMissed",percent:"accuracyPercent",streakTitle:"accuracyStreakTitle",streak:"accuracyStreak",streakLabel:"accuracyStreakLabel",
+   duffs:"accuracyDuffs",duffMarks:"accuracyDuffMarks",shanks:"accuracyShanks",shankMarks:"accuracyShankMarks",skulls:"accuracySkulls",skullMarks:"accuracySkullMarks",
+   missCounts:{longLeft:"accuracyLongLeft",longRight:"accuracyLongRight",shortLeft:"accuracyShortLeft",shortRight:"accuracyShortRight"}
+  },
+  selectionIds:{made:"accuracy-made",longLeft:"accuracy-longLeft",longRight:"accuracy-longRight",shortLeft:"accuracy-shortLeft",shortRight:"accuracy-shortRight"}
+ },
+ contact:{
+  title:"Contact",
+  goodLabel:"Center",
+  missLabel:"Off-Center",
+  percentLabel:"Flush %",
+  missKeys:["highToe","highHeel","lowToe","lowHeel"],
+  missLabels:{highToe:"High Toe",highHeel:"High Heel",lowToe:"Low Toe",lowHeel:"Low Heel"},
+  dom:{
+   made:"contactMade",missed:"contactMissed",percent:"contactPercent",streakTitle:"contactStreakTitle",streak:"contactStreak",streakLabel:"contactStreakLabel",
+   duffs:"contactDuffs",duffMarks:"contactDuffMarks",shanks:"contactShanks",shankMarks:"contactShankMarks",skulls:"contactSkulls",skullMarks:"contactSkullMarks",
+   missCounts:{highToe:"contactHighToe",highHeel:"contactHighHeel",lowToe:"contactLowToe",lowHeel:"contactLowHeel"}
+  },
+  selectionIds:{made:"contact-made",highToe:"contact-highToe",highHeel:"contact-highHeel",lowToe:"contact-lowToe",lowHeel:"contact-lowHeel"}
+ }
+}
+const TRACKER_KEYS=Object.keys(TRACKERS)
+
+let currentClub=DEFAULT_CLUB
+let currentDistance=MODE_CONFIG.wedge.defaultDistance
+let practiceMode="manual"
+let targetSetMode=DEFAULT_TARGET_SET_MODE
+let rangeWindSpeed=0
+let rangeTemperature=RANGE_DEFAULT_TEMP
+let modeSelections={wedge:{club:MODE_CONFIG.wedge.defaultClub,distance:MODE_CONFIG.wedge.defaultDistance}}
+let rangeSelections={random:{club:MODE_CONFIG.range.defaultClub,distance:MODE_CONFIG.range.defaultDistance},manual:{club:MODE_CONFIG.range.defaultClub,distance:MODE_CONFIG.range.defaultDistance}}
+let statsMapByTracker={}
+let streaksByTracker={}
+let bestStreaksByTracker={}
+let sessions=[]
+let shotHistory=[]
+let pendingShot={accuracy:null,contact:null}
+
+function $(id){return document.getElementById(id)}
+function clone(value){return JSON.parse(JSON.stringify(value))}
+function getModeConfig(mode=targetSetMode){return MODE_CONFIG[mode]}
+function getSelectableClubs(mode=targetSetMode){return getModeConfig(mode).clubs}
+function getSelectableDistances(mode=targetSetMode){return getModeConfig(mode).distances}
+function isRangeMode(mode=targetSetMode){return mode==="range"}
+function getActivePracticeMode(){return practiceMode}
+function getShotTargetMode(shot){return shot.targetSetMode||"wedge"}
+function inferLegacyTargetSetMode(club,distance){return distance>=RANGE_DISTANCES[0] ? "range" : "wedge"}
+function getModeShotHistory(mode,targetMode=targetSetMode){return shotHistory.filter(shot=>(shot.mode||"manual")===mode && getShotTargetMode(shot)===targetMode)}
+function getTargetFeet(distance,mode){return mode==="wedge" ? (PGA_PROXIMITY[distance] ?? "") : ""}
+function getUpAndDownValue(distance,mode){return mode==="wedge" ? UP_AND_DOWN[distance] : null}
+function getSignedWindSpeed(){return rangeWindSpeed}
+const HEAD_WIND_ARROW="↓"
+const TAIL_WIND_ARROW="↑"
+function formatWindArrowSpeed(signed){if(signed>0)return HEAD_WIND_ARROW+" "+signed+" mph";if(signed<0)return TAIL_WIND_ARROW+" "+Math.abs(signed)+" mph";return "0 mph"}
+function formatWindSpeed(){return formatWindArrowSpeed(getSignedWindSpeed())}
+function formatSignedWindLabel(signed){if(signed>0)return "Head Wind "+formatWindArrowSpeed(signed);if(signed<0)return "Tail Wind "+formatWindArrowSpeed(signed);return "0 mph"}
+function formatRangeTemperature(){return rangeTemperature+String.fromCharCode(176)+"F"}
+function getShotWindLabel(shot){return formatSignedWindLabel(Number(shot && shot.windSpeed) || 0)}
+function getShotTempLabel(shot){const temperature=Number(shot && shot.temperature);if(!Number.isFinite(temperature)||temperature<=0)return "";return temperature+String.fromCharCode(176)+"F"}
+function uniqueValues(values){return Array.from(new Set(values.filter(Boolean)))}
+function getRangeWindSummary(shots,club,distance){if(!Array.isArray(shots))return "";const labels=uniqueValues(shots.filter(shot=>getShotTargetMode(shot)==="range"&&shot.club===club&&shot.distance===distance).map(getShotWindLabel));return labels.join(" | ")}
+function getRangeTempSummary(shots,club,distance){if(!Array.isArray(shots))return "";const labels=uniqueValues(shots.filter(shot=>getShotTargetMode(shot)==="range"&&shot.club===club&&shot.distance===distance).map(getShotTempLabel));return labels.join(" | ")}
+function getModeLabel(hasRange,hasWedge){if(hasRange&&hasWedge)return "Mixed";if(hasRange)return "Range";return "Wedge"}
+function hasRangeLabel(label){return label==="Range"||label==="Mixed"}
+function hasWedgeLabel(label){return label==="Wedge"||label==="Mixed"}
+function getRangeClubCategory(club){if(["62 deg","60 deg","58 deg","56 deg","54 deg","52 deg","UW","48 deg","PW"].includes(club))return "wedge";if(["9i","8i","7i","6i","5i","4i","3i"].includes(club))return "iron";return "woodHybrid"}
+function getAdjustedRangeCarry(club){
+ const baseCarry=RANGE_CARRY_YARDAGES[club]||0
+ if(!baseCarry) return baseCarry
+ const category=getRangeClubCategory(club)
+ let adjustedCarry=baseCarry
+ if(rangeWindSpeed){
+  const steps=Math.abs(rangeWindSpeed)/5
+  const windRates=RANGE_WIND_ADJUSTMENTS[category]
+  if(windRates){
+   if(rangeWindSpeed>0) adjustedCarry=Math.max(0,adjustedCarry*(1-windRates.head*steps))
+   else if(rangeWindSpeed<0) adjustedCarry=adjustedCarry*(1+windRates.tail*steps)
+  }
+ }
+ if(rangeTemperature!==RANGE_DEFAULT_TEMP){
+  const tempSteps=(rangeTemperature-RANGE_DEFAULT_TEMP)/RANGE_TEMP_STEP
+  const tempRate=RANGE_TEMP_ADJUSTMENTS[category]||0
+  adjustedCarry=adjustedCarry*(1+tempRate*tempSteps)
+ }
+ return Math.max(0,adjustedCarry)
+}
+function clampRangeDistance(distance){return Math.max(RANGE_DISTANCE_MIN,Math.min(RANGE_DISTANCE_MAX,Math.round(distance)))}
+function getManualRangeTargetDistance(club=currentClub){const adjustedCarry=getAdjustedRangeCarry(club);const fallbackCarry=RANGE_CARRY_YARDAGES[club]||MODE_CONFIG.range.defaultDistance;return Math.round(adjustedCarry||fallbackCarry)}
+function bucketHasShots(statsMap,targetMode,club,distances){return distances.some(d=>{const bucket=statsMap&&statsMap[targetMode]&&statsMap[targetMode][club]&&statsMap[targetMode][club][d];return !!bucket&&((bucket.made||0)+(bucket.missed||0)>0)})}
+function getClubRangeModeLabel(statsMap,club){return getModeLabel(bucketHasShots(statsMap,"range",club,ALL_DISTANCES),bucketHasShots(statsMap,"wedge",club,ALL_DISTANCES))}
+function getSessionRangeModeLabel(statsMap){const hasRange=ALL_CLUBS.some(club=>bucketHasShots(statsMap,"range",club,ALL_DISTANCES));const hasWedge=ALL_CLUBS.some(club=>bucketHasShots(statsMap,"wedge",club,ALL_DISTANCES));return getModeLabel(hasRange,hasWedge)}
+function getRangeEligibleClubs(distance=currentDistance){return RANGE_CLUBS.filter(club=>Math.abs(getAdjustedRangeCarry(club)-distance)<=RANGE_RECOMMENDATION_WINDOW)}
+function getRecommendedRangeClub(distance=currentDistance){
+ const eligible=getRangeEligibleClubs(distance)
+ const clubs=eligible.length ? eligible : RANGE_CLUBS
+ return clubs.slice().sort((a,b)=>{
+  const diffA=Math.abs(getAdjustedRangeCarry(a)-distance)
+  const diffB=Math.abs(getAdjustedRangeCarry(b)-distance)
+  if(diffA!==diffB) return diffA-diffB
+  return (RANGE_CARRY_YARDAGES[a]||0)-(RANGE_CARRY_YARDAGES[b]||0)
+ })[0]
+}
+function getDisplayedRangeClubs(distance=currentDistance){const eligible=getRangeEligibleClubs(distance);return eligible.length ? eligible : [getRecommendedRangeClub(distance)]}
+function createMissDir(trackerKey){const missDir={};TRACKERS[trackerKey].missKeys.forEach(key=>{missDir[key]=0});return missDir}
+function createStatBucket(trackerKey){return {made:0,missed:0,duffs:0,shanks:0,skulls:0,missDir:createMissDir(trackerKey)}}
+function createDistanceMap(factory){const map={};ALL_DISTANCES.forEach(d=>{map[d]=factory()});return map}
+function createClubDistanceMap(factory){const map={};ALL_CLUBS.forEach(club=>{map[club]=createDistanceMap(factory)});return map}
+function createModeMap(factory){const map={};TARGET_SET_MODES.forEach(mode=>{map[mode]=createClubDistanceMap(factory)});return map}
+function hasModeKeys(obj){return !!obj&&TARGET_SET_MODES.some(mode=>obj[mode]&&typeof obj[mode]==="object")}
+function hasClubKeys(obj){return !!obj&&ALL_CLUBS.some(club=>obj[club]&&typeof obj[club]==="object")}
+function migrateLegacyMap(obj,factory){
+ const map=createModeMap(factory)
+ if(!obj||typeof obj!=="object") return map
+ if(hasModeKeys(obj)){
+  TARGET_SET_MODES.forEach(mode=>ALL_CLUBS.forEach(club=>ALL_DISTANCES.forEach(d=>{if(obj[mode]&&obj[mode][club]&&obj[mode][club][d]!=null)map[mode][club][d]=obj[mode][club][d]})))
+  return map
+ }
+ if(hasClubKeys(obj)){
+  ALL_CLUBS.forEach(club=>ALL_DISTANCES.forEach(d=>{if(obj[club]&&obj[club][d]!=null){const mode=inferLegacyTargetSetMode(club,d);map[mode][club][d]=obj[club][d]}}))
+  return map
+ }
+ WEDGE_DISTANCES.forEach(d=>{if(obj[d]!=null) map.wedge[DEFAULT_CLUB][d]=obj[d]})
+ return map
+}
+function ensureStatsShape(obj,trackerKey){
+ const map=migrateLegacyMap(obj,()=>createStatBucket(trackerKey))
+ TARGET_SET_MODES.forEach(mode=>ALL_CLUBS.forEach(club=>ALL_DISTANCES.forEach(d=>{
+  const bucket=map[mode][club][d]||{}
+  const normalized=createMissDir(trackerKey)
+  TRACKERS[trackerKey].missKeys.forEach(key=>{normalized[key]=Number(bucket.missDir&&bucket.missDir[key])||0})
+  map[mode][club][d]={made:Number(bucket.made)||0,missed:Number(bucket.missed)||0,duffs:Number(bucket.duffs)||0,shanks:Number(bucket.shanks)||0,skulls:Number(bucket.skulls)||0,missDir:normalized}
+ })))
+ return map
+}
+function ensureCounterShape(obj){
+ const map=migrateLegacyMap(obj,()=>0)
+ TARGET_SET_MODES.forEach(mode=>ALL_CLUBS.forEach(club=>ALL_DISTANCES.forEach(d=>{map[mode][club][d]=Number(map[mode][club][d])||0})))
+ return map
+}
+function defaultStats(trackerKey){return ensureStatsShape({},trackerKey)}
+function defaultCounters(){return ensureCounterShape({})}
+function getTrackerStorageKey(trackerKey,suffix){return APP_STORAGE_PREFIX+"_"+trackerKey+"_"+suffix}
+function loadTrackerStats(trackerKey){try{return ensureStatsShape(JSON.parse(localStorage.getItem(getTrackerStorageKey(trackerKey,"stats"))),trackerKey)}catch{return defaultStats(trackerKey)}}
+function saveTrackerStats(trackerKey){localStorage.setItem(getTrackerStorageKey(trackerKey,"stats"),JSON.stringify(statsMapByTracker[trackerKey]))}
+function loadTrackerStreaks(trackerKey){try{return ensureCounterShape(JSON.parse(localStorage.getItem(getTrackerStorageKey(trackerKey,"streaks"))))}catch{return defaultCounters()}}
+function saveTrackerStreaks(trackerKey){localStorage.setItem(getTrackerStorageKey(trackerKey,"streaks"),JSON.stringify(streaksByTracker[trackerKey]))}
+function loadTrackerBestStreaks(trackerKey){try{return ensureCounterShape(JSON.parse(localStorage.getItem(getTrackerStorageKey(trackerKey,"bestStreaks"))))}catch{return defaultCounters()}}
+function saveTrackerBestStreaks(trackerKey){localStorage.setItem(getTrackerStorageKey(trackerKey,"bestStreaks"),JSON.stringify(bestStreaksByTracker[trackerKey]))}
+function loadPracticeMode(){try{const saved=localStorage.getItem(PRACTICE_MODE_KEY);return saved==="random"?"random":"manual"}catch{return "manual"}}
+function savePracticeMode(){localStorage.setItem(PRACTICE_MODE_KEY,practiceMode)}
+function loadTargetSetMode(){try{const saved=localStorage.getItem(TARGET_SET_MODE_KEY);return TARGET_SET_MODES.includes(saved)?saved:DEFAULT_TARGET_SET_MODE}catch{return DEFAULT_TARGET_SET_MODE}}
+function saveTargetSetMode(){localStorage.setItem(TARGET_SET_MODE_KEY,targetSetMode)}
+function loadRangeWindSpeed(){try{const saved=Number(localStorage.getItem(RANGE_WIND_SPEED_KEY));if(!Number.isFinite(saved))return 0;return Math.max(-25,Math.min(25,saved))}catch{return 0}}
+function saveRangeWindSpeed(){localStorage.setItem(RANGE_WIND_SPEED_KEY,rangeWindSpeed)}
+function loadRangeTemperature(){try{const saved=Number(localStorage.getItem(RANGE_TEMP_KEY));if(!Number.isFinite(saved))return RANGE_DEFAULT_TEMP;return Math.max(RANGE_TEMP_MIN,Math.min(RANGE_TEMP_MAX,saved))}catch{return RANGE_DEFAULT_TEMP}}
+function saveRangeTemperature(){localStorage.setItem(RANGE_TEMP_KEY,rangeTemperature)}
+function normalizeSelectionState(saved){
+ const wedge=saved&&saved.wedge ? saved.wedge : {}
+ const range=saved&&saved.range ? saved.range : {}
+ const randomRange=range&&range.random ? range.random : {}
+ const manualRange=range&&range.manual ? range.manual : {}
+ return {
+  wedge:{club:WEDGE_CLUBS.includes(wedge.club)?wedge.club:MODE_CONFIG.wedge.defaultClub,distance:WEDGE_DISTANCES.includes(Number(wedge.distance))?Number(wedge.distance):MODE_CONFIG.wedge.defaultDistance},
+  range:{
+   random:{club:RANGE_CLUBS.includes(randomRange.club)?randomRange.club:MODE_CONFIG.range.defaultClub,distance:RANGE_DISTANCES.includes(Number(randomRange.distance))?Number(randomRange.distance):MODE_CONFIG.range.defaultDistance},
+   manual:{club:RANGE_CLUBS.includes(manualRange.club)?manualRange.club:MODE_CONFIG.range.defaultClub,distance:RANGE_DISTANCES.includes(Number(manualRange.distance))?Number(manualRange.distance):MODE_CONFIG.range.defaultDistance}
+  }
+ }
+}
+function loadSelectionState(){try{return normalizeSelectionState(JSON.parse(localStorage.getItem(SELECTION_STATE_KEY)))}catch{return normalizeSelectionState(null)}}
+function saveSelectionState(){localStorage.setItem(SELECTION_STATE_KEY,JSON.stringify({wedge:modeSelections.wedge,range:rangeSelections}))}
+function loadShotHistory(){try{const saved=JSON.parse(localStorage.getItem(SHOT_HISTORY_KEY));return Array.isArray(saved)?saved:[]}catch{return []}}
+function saveShotHistory(){localStorage.setItem(SHOT_HISTORY_KEY,JSON.stringify(shotHistory))}
+function buildSessionStateFromShots(history,date=new Date().toISOString()){
+ const state=createTrackerStateSnapshot()
+ const sessionShots=clone(history)
+ const touchedTargets=new Set()
+ sessionShots.forEach(shot=>{
+  const targetMode=getShotTargetMode(shot)
+  applyShotResultToStatsMap(state.statsMapByTracker,"accuracy",shot.accuracy,targetMode,shot.club,shot.distance)
+  applyShotResultToStatsMap(state.statsMapByTracker,"contact",shot.contact,targetMode,shot.club,shot.distance)
+  touchedTargets.add([targetMode,shot.club,shot.distance].join("|"))
+ })
+ touchedTargets.forEach(key=>{
+  const [targetMode,club,distance]=key.split("|")
+  recomputeTrackerStateHistoryFor(state,sessionShots,targetMode,club,Number(distance))
+ })
+ return {
+  date,
+  accuracyStats:state.statsMapByTracker.accuracy,
+  accuracyBestStreaks:state.bestStreaksByTracker.accuracy,
+  contactStats:state.statsMapByTracker.contact,
+  contactBestStreaks:state.bestStreaksByTracker.contact,
+  shots:sessionShots,
+  accuracySummary:summarizeStats(state.statsMapByTracker.accuracy),
+  contactSummary:summarizeStats(state.statsMapByTracker.contact)
+ }
+}
+function normalizeSession(session){
+ const safeSession=session||{}
+ const sessionShots=Array.isArray(safeSession.shots)?safeSession.shots:[]
+ if((!safeSession.accuracyStats||!safeSession.contactStats||!safeSession.accuracyBestStreaks||!safeSession.contactBestStreaks)&&sessionShots.length){
+  const rebuilt=buildSessionStateFromShots(sessionShots,safeSession.date||new Date().toISOString())
+  return {
+   date:rebuilt.date,
+   accuracyStats:rebuilt.accuracyStats,
+   contactStats:rebuilt.contactStats,
+   accuracyBestStreaks:rebuilt.accuracyBestStreaks,
+   contactBestStreaks:rebuilt.contactBestStreaks,
+   shots:rebuilt.shots,
+   accuracySummary:safeSession.accuracySummary||rebuilt.accuracySummary,
+   contactSummary:safeSession.contactSummary||rebuilt.contactSummary
+  }
+ }
+ const accuracyStats=ensureStatsShape(safeSession.accuracyStats, "accuracy")
+ const contactStats=ensureStatsShape(safeSession.contactStats, "contact")
+ return {
+  date:safeSession.date||new Date().toISOString(),
+  accuracyStats:accuracyStats,
+  contactStats:contactStats,
+  accuracyBestStreaks:ensureCounterShape(safeSession.accuracyBestStreaks),
+  contactBestStreaks:ensureCounterShape(safeSession.contactBestStreaks),
+  shots:sessionShots,
+  accuracySummary:safeSession.accuracySummary||summarizeStats(accuracyStats),
+  contactSummary:safeSession.contactSummary||summarizeStats(contactStats)
+ }
+}
+function serializeSession(session){
+ const normalized=normalizeSession(session)
+ return {
+  date:normalized.date,
+  shots:clone(normalized.shots),
+  accuracySummary:normalized.accuracySummary,
+  contactSummary:normalized.contactSummary
+ }
+}
+function storedSessionsNeedCompaction(){
+ try{
+  const saved=JSON.parse(localStorage.getItem(SESSIONS_KEY))
+  return Array.isArray(saved)&&saved.some(session=>session&&typeof session==="object"&&("accuracyStats" in session||"contactStats" in session||"accuracyBestStreaks" in session||"contactBestStreaks" in session))
+ }catch{return false}
+}
+function loadSessions(){
+ try{
+  const saved=JSON.parse(localStorage.getItem(SESSIONS_KEY))
+  if(!Array.isArray(saved)) return []
+  return saved.map(session=>{
+   try{return normalizeSession(session)}catch{return null}
+  }).filter(Boolean)
+ }catch{return []}
+}
+function saveSessions(nextSessions=sessions){
+ sessions=(Array.isArray(nextSessions)?nextSessions:[]).map(session=>normalizeSession(session))
+ localStorage.setItem(SESSIONS_KEY,JSON.stringify(sessions.map(serializeSession)))
+ return sessions
+}
+function persistLiveState(){
+ TRACKER_KEYS.forEach(trackerKey=>{saveTrackerStats(trackerKey);saveTrackerStreaks(trackerKey);saveTrackerBestStreaks(trackerKey)})
+ savePracticeMode()
+ saveTargetSetMode()
+ saveRangeWindSpeed()
+ saveRangeTemperature()
+ saveShotHistory()
+ saveSelectionState()
+}
+function getStreakEmojis(v){if(v>=10)return "Flaming Streak";if(v>=7)return "Hot Streak";if(v>=5)return "Strong Streak";if(v>=3)return "Building Streak";if(v>=1)return "Streak";return "Streak"}
+function getStatsBucket(statsMap,mode,club,distance){return statsMap[mode][club][distance]}
+function getCurrentStats(trackerKey){return getStatsBucket(statsMapByTracker[trackerKey],targetSetMode,currentClub,currentDistance)}
+function getCurrentStreak(trackerKey){return streaksByTracker[trackerKey][targetSetMode][currentClub][currentDistance]||0}
+function getCurrentBestStreak(trackerKey){return bestStreaksByTracker[trackerKey][targetSetMode][currentClub][currentDistance]||0}
+function formatPercent(value){return Number.isInteger(value)?value.toString():value.toFixed(1)}
+function formatClubLabel(club){if(club==="Driver")return "D";return club.replace(/ deg\b/g,String.fromCharCode(176))}
+function updatePendingVisuals(){
+ TRACKER_KEYS.forEach(trackerKey=>{
+  const config=TRACKERS[trackerKey]
+  Object.values(config.selectionIds).forEach(id=>{const node=$(id);if(node)node.classList.remove("selected")})
+  const pending=pendingShot[trackerKey]
+  if(pending){
+   const selectedId=pending.type==="made" ? config.selectionIds.made : config.selectionIds[pending.dir]
+   if(selectedId&&$(selectedId)) $(selectedId).classList.add("selected")
+  }
+ })
+}
+function clearPendingSelections(){pendingShot={accuracy:null,contact:null};updatePendingVisuals()}
+function resetLiveTrackingState(){
+ TRACKER_KEYS.forEach(trackerKey=>{
+  statsMapByTracker[trackerKey]=defaultStats(trackerKey)
+  streaksByTracker[trackerKey]=defaultCounters()
+  bestStreaksByTracker[trackerKey]=defaultCounters()
+ })
+}
+function createTrackerStateSnapshot(){
+ const state={statsMapByTracker:{},streaksByTracker:{},bestStreaksByTracker:{}}
+ TRACKER_KEYS.forEach(trackerKey=>{
+  state.statsMapByTracker[trackerKey]=defaultStats(trackerKey)
+  state.streaksByTracker[trackerKey]=defaultCounters()
+  state.bestStreaksByTracker[trackerKey]=defaultCounters()
+ })
+ return state
+}
+function summarizeShotResults(history,trackerKey){
+ let made=0,missed=0,duffs=0,shanks=0,skulls=0
+ history.forEach(shot=>{
+  const result=shot[trackerKey]
+  if(!result) return
+  if(result.type==="made"){made++;return}
+  missed++
+  if(result.type==="duff") duffs++
+  if(result.type==="shank") shanks++
+  if(result.type==="skull") skulls++
+ })
+ return {made,missed,duffs,shanks,skulls,total:made+missed}
+}
+function isPerfectShot(shot){
+ return !!(shot&&shot.accuracy&&shot.contact&&shot.accuracy.type==="made"&&shot.contact.type==="made")
+}
+function summarizeShotSequence(history){
+ let streak=0,best=0
+ history.forEach(shot=>{
+  if(isPerfectShot(shot)){streak++;if(streak>best)best=streak}else streak=0
+ })
+ return {streak,best}
+}
+function summarizeStats(statsMap){
+ let totalMade=0,totalMissed=0
+ TARGET_SET_MODES.forEach(mode=>ALL_CLUBS.forEach(club=>ALL_DISTANCES.forEach(d=>{totalMade+=statsMap[mode][club][d].made||0;totalMissed+=statsMap[mode][club][d].missed||0})))
+ const total=totalMade+totalMissed
+ return {made:totalMade,missed:totalMissed,total,pct:total?Math.round(totalMade/total*100):0}
+}
+function summarizeSessionTracker(session,trackerKey){
+ const statsMap=trackerKey==="accuracy" ? session.accuracyStats : session.contactStats
+ let made=0,missed=0,duffs=0,shanks=0,skulls=0
+ TARGET_SET_MODES.forEach(mode=>ALL_CLUBS.forEach(club=>ALL_DISTANCES.forEach(distance=>{
+  const bucket=statsMap[mode][club][distance]
+  made+=bucket.made||0
+  missed+=bucket.missed||0
+  duffs+=bucket.duffs||0
+  shanks+=bucket.shanks||0
+  skulls+=bucket.skulls||0
+ })))
+ const total=made+missed
+ return {made,missed,duffs,shanks,skulls,total,pct:total?Math.round(made/total*100):0}
+}
+function getSessionBestStreak(session){
+ if(Array.isArray(session.shots)&&session.shots.length) return summarizeShotSequence(session.shots).best
+ let best=0
+ TARGET_SET_MODES.forEach(mode=>ALL_CLUBS.forEach(club=>ALL_DISTANCES.forEach(distance=>{
+  best=Math.max(best,session.accuracyBestStreaks[mode][club][distance]||0,session.contactBestStreaks[mode][club][distance]||0)
+ })))
+ return best
+}
+function getSessionTargetBestStreak(session,mode,club,distance){
+ if(Array.isArray(session.shots)&&session.shots.length){
+  return summarizeShotSequence(session.shots.filter(shot=>getShotTargetMode(shot)===mode&&shot.club===club&&shot.distance===distance)).best
+ }
+ return Math.max(session.accuracyBestStreaks[mode][club][distance]||0,session.contactBestStreaks[mode][club][distance]||0)
+}
+function setTitle(){return}
+function renderPracticeMode(){
+ const btn=$("practiceModeBtn")
+ const target=$("modeTarget")
+ const targetModeBtn=$("targetSetBtn")
+ const activePracticeMode=getActivePracticeMode()
+ const rangeActive=isRangeMode()
+ const isRandom=activePracticeMode==="random"
+ btn.innerHTML=isRandom ? "Random<br>Mode On" : "Manual<br>Mode On"
+ btn.className="mode-btn"+(isRandom?" active":"")
+ targetModeBtn.innerHTML=rangeActive ? "Range<br>Mode On" : "Wedge<br>Mode On"
+ targetModeBtn.className="mode-btn target-set-btn"+(rangeActive?" range-active":"")
+ target.textContent=(isRandom ? "Random Shot: " : "Current Shot: ")+formatClubLabel(currentClub)+" - "+currentDistance+"y"
+}
+function buildClubRow(){
+ const r=$("clubRow")
+ r.innerHTML=""
+ const rangeMode=isRangeMode()
+ if(rangeMode){
+  r.style.justifyContent="center"
+  r.style.flexDirection="column"
+  r.style.alignItems="center"
+  r.style.overflowX="visible"
+  const windRow=document.createElement("div")
+  windRow.style.display="flex";windRow.style.gap="8px";windRow.style.alignItems="center";windRow.style.justifyContent="center";windRow.style.flexWrap="wrap";windRow.style.width="100%"
+  const windLabel=document.createElement("button")
+  windLabel.className="pill-btn";windLabel.textContent="Wind";windLabel.disabled=true
+  const speedWrap=document.createElement("div")
+  speedWrap.className="range-speed"
+  const minusBtn=document.createElement("button")
+  minusBtn.className="range-speed-btn";minusBtn.textContent="-";minusBtn.onclick=()=>adjustWindSpeed(-5)
+  const speedValue=document.createElement("div")
+  speedValue.className="range-speed-value";speedValue.textContent=formatWindSpeed()
+  const plusBtn=document.createElement("button")
+  plusBtn.className="range-speed-btn";plusBtn.textContent="+";plusBtn.onclick=()=>adjustWindSpeed(5)
+  speedWrap.append(minusBtn,speedValue,plusBtn)
+  windRow.append(windLabel,speedWrap)
+  const tempRow=document.createElement("div")
+  tempRow.style.display="flex";tempRow.style.gap="8px";tempRow.style.alignItems="center";tempRow.style.justifyContent="center";tempRow.style.flexWrap="wrap";tempRow.style.width="100%"
+  const tempLabel=document.createElement("button")
+  tempLabel.className="pill-btn";tempLabel.textContent="Temp";tempLabel.disabled=true
+  const tempWrap=document.createElement("div")
+  tempWrap.className="range-speed range-temp-stepper"
+  const tempMinusBtn=document.createElement("button")
+  tempMinusBtn.className="range-speed-btn";tempMinusBtn.textContent="-";tempMinusBtn.onclick=()=>adjustRangeTemperature(-RANGE_TEMP_STEP)
+  const tempValue=document.createElement("div")
+  tempValue.className="range-speed-value range-temp-value";tempValue.textContent=formatRangeTemperature()
+  const tempPlusBtn=document.createElement("button")
+  tempPlusBtn.className="range-speed-btn";tempPlusBtn.textContent="+";tempPlusBtn.onclick=()=>adjustRangeTemperature(RANGE_TEMP_STEP)
+  tempWrap.append(tempMinusBtn,tempValue,tempPlusBtn)
+  tempRow.append(tempLabel,tempWrap)
+  r.append(windRow,tempRow)
+  return
+ }
+ r.style.justifyContent=""
+ r.style.flexDirection=""
+ r.style.alignItems=""
+ r.style.overflowX=""
+ getSelectableClubs().forEach(club=>{
+  const b=document.createElement("button")
+  b.className="pill-btn"+(club===currentClub?" active":"")
+  b.textContent=formatClubLabel(club)
+  b.onclick=()=>setClub(club)
+  r.appendChild(b)
+ })
+}
+function buildDistanceRow(){
+ const r=$("distanceRow")
+ r.innerHTML=""
+ if(isRangeMode()){
+  if(getActivePracticeMode()==="manual"){
+   r.style.justifyContent=""
+   RANGE_MANUAL_CLUBS.forEach(club=>{
+    const b=document.createElement("button")
+    b.className="pill-btn"+(club===currentClub?" active":"")
+    b.textContent=formatClubLabel(club)
+    b.onclick=()=>setClub(club)
+    r.appendChild(b)
+   })
+   return
+  }
+  r.style.justifyContent="center"
+  getDisplayedRangeClubs().forEach(club=>{
+   const b=document.createElement("button")
+   b.className="pill-btn"+(club===currentClub?" active":"")
+   b.textContent=formatClubLabel(club)
+   b.onclick=()=>setClub(club)
+   r.appendChild(b)
+  })
+  return
+ }
+ r.style.justifyContent=""
+ getSelectableDistances().forEach(d=>{
+  const b=document.createElement("button")
+  b.className="pill-btn"+(d===currentDistance?" active":"")
+  b.textContent=d+"y"
+  b.onclick=()=>setDistance(d)
+  r.appendChild(b)
+ })
+}
+function syncCurrentSelection(){setTitle();buildClubRow();buildDistanceRow();clearPendingSelections();updateStats();renderPracticeMode();persistLiveState()}
+function setClub(club){
+ currentClub=club
+ if(isRangeMode()){
+  if(getActivePracticeMode()==="manual"){currentDistance=getManualRangeTargetDistance(club);rangeSelections.manual={club,distance:currentDistance}}
+  else rangeSelections.random.club=club
+ }else modeSelections.wedge.club=club
+ syncCurrentSelection()
+}
+function setDistance(d){if(isRangeMode())return;currentDistance=d;modeSelections.wedge.distance=d;syncCurrentSelection()}
+function setTarget(club,distance){
+ currentClub=club
+ currentDistance=distance
+ if(isRangeMode()){
+  if(getActivePracticeMode()==="manual"){currentDistance=getManualRangeTargetDistance(club);rangeSelections.manual={club,distance:currentDistance}}
+  else rangeSelections.random={club,distance}
+ }else modeSelections.wedge={club,distance}
+ syncCurrentSelection()
+}
+function pickRandomRangeDistance(){
+ const distances=getSelectableDistances()
+ if(!distances.length) return
+ let next=currentDistance
+ if(distances.length===1) next=distances[0]
+ else while(next===currentDistance){next=distances[Math.floor(Math.random()*distances.length)]}
+ currentDistance=next
+ currentClub=getRecommendedRangeClub(next)
+ rangeSelections.random.distance=next
+ rangeSelections.random.club=currentClub
+ syncCurrentSelection()
+}
+function pickRandomTarget(){
+ if(isRangeMode()){pickRandomRangeDistance();return}
+ const combos=[]
+ getSelectableClubs().forEach(club=>getSelectableDistances().forEach(distance=>{if(club!==currentClub||distance!==currentDistance) combos.push({club,distance})}))
+ if(!combos.length) return
+ const next=combos[Math.floor(Math.random()*combos.length)]
+ setTarget(next.club,next.distance)
+}
+function togglePracticeMode(){
+ practiceMode=practiceMode==="manual" ? "random" : "manual"
+ persistLiveState()
+ clearPendingSelections()
+ if(isRangeMode()){
+  if(practiceMode==="random"){pickRandomTarget();return}
+  rangeSelections.manual={club:RANGE_CLUBS.includes(currentClub)?currentClub:MODE_CONFIG.range.defaultClub,distance:currentDistance}
+  currentClub=rangeSelections.manual.club
+  currentDistance=rangeSelections.manual.distance
+  syncCurrentSelection()
+  return
+ }
+ if(practiceMode==="random"){pickRandomTarget();return}
+ syncCurrentSelection()
+}
+function toggleTargetSetMode(){
+ clearPendingSelections()
+ if(isRangeMode()){
+  targetSetMode="wedge"
+  persistLiveState()
+  currentClub=modeSelections.wedge.club
+  currentDistance=modeSelections.wedge.distance
+  syncCurrentSelection()
+  return
+ }
+ targetSetMode="range"
+ persistLiveState()
+ if(getActivePracticeMode()==="manual"){
+  const manualSelection=rangeSelections.manual
+  currentClub=RANGE_CLUBS.includes(manualSelection.club)?manualSelection.club:MODE_CONFIG.range.defaultClub
+  currentDistance=getManualRangeTargetDistance(currentClub)
+  rangeSelections.manual={club:currentClub,distance:currentDistance}
+  syncCurrentSelection()
+  return
+ }
+ const randomSelection=rangeSelections.random
+ currentClub=RANGE_CLUBS.includes(randomSelection.club)?randomSelection.club:MODE_CONFIG.range.defaultClub
+ currentDistance=getSelectableDistances().includes(randomSelection.distance)?randomSelection.distance:MODE_CONFIG.range.defaultDistance
+ rangeSelections.random={club:currentClub,distance:currentDistance}
+ pickRandomTarget()
+}
+function refreshRangeRecommendation(){
+ clearPendingSelections()
+ if(!isRangeMode()) return
+ if(getActivePracticeMode()==="manual"){
+  currentDistance=getManualRangeTargetDistance(currentClub)
+  rangeSelections.manual={club:currentClub,distance:currentDistance}
+  syncCurrentSelection()
+  return
+ }
+ const eligible=getRangeEligibleClubs(currentDistance)
+ if(eligible.length===1){currentClub=eligible[0];rangeSelections.random.club=currentClub}
+ rangeSelections.random.distance=currentDistance
+ syncCurrentSelection()
+}
+function adjustWindSpeed(delta){rangeWindSpeed=Math.max(-25,Math.min(25,rangeWindSpeed+delta));persistLiveState();refreshRangeRecommendation()}
+function adjustRangeTemperature(delta){rangeTemperature=Math.max(RANGE_TEMP_MIN,Math.min(RANGE_TEMP_MAX,rangeTemperature+delta));persistLiveState();refreshRangeRecommendation()}
+function getShotResult(shot,trackerKey){return shot&&shot[trackerKey]}
+function buildShotPayload(resultAccuracy,resultContact){
+ return {
+  id:String(Date.now())+"-"+Math.random().toString(36).slice(2),
+  club:currentClub,
+  distance:currentDistance,
+  mode:getActivePracticeMode(),
+  targetSetMode:targetSetMode,
+  windSpeed:isRangeMode()?rangeWindSpeed:null,
+  temperature:isRangeMode()?rangeTemperature:null,
+  accuracy:resultAccuracy,
+  contact:resultContact
+ }
+}
+function applyShotResultToStatsMap(statsMap,trackerKey,result,mode,club,distance){
+ const bucket=statsMap[trackerKey][mode][club][distance]
+ if(result.type==="made"){
+  bucket.made++
+  return
+ }
+ bucket.missed++
+ if(result.type==="missed"&&result.dir) bucket.missDir[result.dir]++
+ if(result.type==="duff") bucket.duffs++
+ if(result.type==="shank") bucket.shanks++
+ if(result.type==="skull") bucket.skulls++
+}
+function applyShotResultToTracker(trackerKey,result,mode,club,distance){
+ applyShotResultToStatsMap(statsMapByTracker,trackerKey,result,mode,club,distance)
+}
+function removeShotResultFromTracker(trackerKey,result,mode,club,distance){
+ const bucket=statsMapByTracker[trackerKey][mode][club][distance]
+ if(result.type==="made"&&bucket.made>0) bucket.made--
+ if(result.type!=="made"&&bucket.missed>0) bucket.missed--
+ if(result.type==="missed"&&result.dir&&bucket.missDir[result.dir]>0) bucket.missDir[result.dir]--
+ if(result.type==="duff"&&bucket.duffs>0) bucket.duffs--
+ if(result.type==="shank"&&bucket.shanks>0) bucket.shanks--
+ if(result.type==="skull"&&bucket.skulls>0) bucket.skulls--
+}
+function recomputeHistoryFor(targetMode,club,distance){
+ let streak=0,best=0
+ shotHistory.forEach(shot=>{
+  if(getShotTargetMode(shot)!==targetMode||shot.club!==club||shot.distance!==distance) return
+  if(isPerfectShot(shot)){streak++;if(streak>best)best=streak}else streak=0
+ })
+ TRACKER_KEYS.forEach(trackerKey=>{
+  streaksByTracker[trackerKey][targetMode][club][distance]=streak
+  bestStreaksByTracker[trackerKey][targetMode][club][distance]=best
+ })
+}
+function recomputeTrackerStateHistoryFor(state,history,targetMode,club,distance){
+ let streak=0,best=0
+ history.forEach(shot=>{
+  if(getShotTargetMode(shot)!==targetMode||shot.club!==club||shot.distance!==distance) return
+  if(isPerfectShot(shot)){streak++;if(streak>best)best=streak}else streak=0
+ })
+ TRACKER_KEYS.forEach(trackerKey=>{
+  state.streaksByTracker[trackerKey][targetMode][club][distance]=streak
+  state.bestStreaksByTracker[trackerKey][targetMode][club][distance]=best
+ })
+}
+function rebuildLiveTrackingFromHistory(){
+ resetLiveTrackingState()
+ const touchedTargets=new Set()
+ shotHistory.forEach(shot=>{
+  const targetMode=getShotTargetMode(shot)
+  applyShotResultToTracker("accuracy",shot.accuracy,targetMode,shot.club,shot.distance)
+  applyShotResultToTracker("contact",shot.contact,targetMode,shot.club,shot.distance)
+  touchedTargets.add([targetMode,shot.club,shot.distance].join("|"))
+ })
+ touchedTargets.forEach(key=>{
+  const [targetMode,club,distance]=key.split("|")
+  recomputeHistoryFor(targetMode,club,Number(distance))
+ })
+}
+function buildSessionSnapshotFromShots(history,date=new Date().toISOString()){
+ return normalizeSession(buildSessionStateFromShots(history,date))
+}
+function hasTrackedSessionData(){
+ if(shotHistory.length) return true
+ return TRACKER_KEYS.some(trackerKey=>TARGET_SET_MODES.some(mode=>ALL_CLUBS.some(club=>ALL_DISTANCES.some(distance=>{
+  const bucket=statsMapByTracker[trackerKey][mode][club][distance]
+  return !!((bucket.made||0)||(bucket.missed||0)||(bucket.duffs||0)||(bucket.shanks||0)||(bucket.skulls||0))
+ }))))
+}
+function buildCurrentSessionSnapshot(){
+ rebuildLiveTrackingFromHistory()
+ return normalizeSession({
+  date:new Date().toISOString(),
+  shots:clone(shotHistory),
+  accuracySummary:summarizeStats(statsMapByTracker.accuracy),
+  contactSummary:summarizeStats(statsMapByTracker.contact)
+ })
+}
+function refreshHistoryPanel(){
+ sessions=loadSessions()
+ renderHistory()
+}
+function flashForShot(resultAccuracy,resultContact){
+ const isGreen=resultAccuracy.type==="made"&&resultContact.type==="made"
+ document.body.classList.remove(isGreen?"flash-red":"flash-green")
+ document.body.classList.add(isGreen?"flash-green":"flash-red")
+ setTimeout(()=>document.body.classList.remove(isGreen?"flash-green":"flash-red"),150)
+}
+function commitShot(resultAccuracy,resultContact){
+ const shot=buildShotPayload(resultAccuracy,resultContact)
+ applyShotResultToTracker("accuracy",resultAccuracy,shot.targetSetMode,shot.club,shot.distance)
+ applyShotResultToTracker("contact",resultContact,shot.targetSetMode,shot.club,shot.distance)
+ shotHistory.push(shot)
+ recomputeHistoryFor(shot.targetSetMode,shot.club,shot.distance)
+ flashForShot(resultAccuracy,resultContact)
+ clearPendingSelections()
+ persistLiveState()
+ advancePracticeTarget()
+ updateStats()
+}
+function tryCommitPendingShot(){if(pendingShot.accuracy&&pendingShot.contact) commitShot(pendingShot.accuracy,pendingShot.contact); else updatePendingVisuals()}
+function recordMade(){pendingShot.accuracy={type:"made"};tryCommitPendingShot()}
+function recordMissed(dir){pendingShot.accuracy={type:"missed",dir};tryCommitPendingShot()}
+function recordContactMade(){pendingShot.contact={type:"made"};tryCommitPendingShot()}
+function recordContactMissed(dir){pendingShot.contact={type:"missed",dir};tryCommitPendingShot()}
+function recordDuff(){commitShot({type:"duff"},{type:"duff"})}
+function recordShank(){commitShot({type:"shank"},{type:"shank"})}
+function recordSkull(){commitShot({type:"skull"},{type:"skull"})}
+function advancePracticeTarget(){if(getActivePracticeMode()==="random") pickRandomTarget()}
+function renderTrackerStats(trackerKey){
+ const modeHistory=getModeShotHistory(getActivePracticeMode(),targetSetMode)
+ const modeStats=summarizeShotResults(modeHistory,trackerKey)
+ const shotSummary=summarizeShotSequence(modeHistory)
+ const currentPct=modeStats.total?Math.round(modeStats.made/modeStats.total*100):0
+ const streakValue=shotSummary.streak
+ return {
+  modeStats,
+  currentPct,
+  made:modeStats.made,
+  missed:modeStats.missed,
+  duffs:modeStats.duffs,
+  shanks:modeStats.shanks,
+  skulls:modeStats.skulls,
+  streakValue
+ }
+}
+function updateStats(){
+ const activePracticeMode=getActivePracticeMode()
+ const isRandom=activePracticeMode==="random"
+ const rangeActive=isRangeMode()
+ const badge=$("targetBadge")
+ const totalShots=shotHistory.length
+ const accuracyModeStats=renderTrackerStats("accuracy")
+ const contactModeStats=renderTrackerStats("contact")
+ const streakValue=accuracyModeStats.streakValue
+ let fireCount=0
+ if(streakValue>=10) fireCount=5
+ else if(streakValue>=7) fireCount=4
+ else if(streakValue>=5) fireCount=3
+ else if(streakValue>=3) fireCount=2
+ else if(streakValue>=1) fireCount=1
+ $("statsMade").textContent=accuracyModeStats.made
+ $("statsMissed").textContent=accuracyModeStats.missed
+ $("statsCenter").textContent=contactModeStats.made
+ $("statsOffCenter").textContent=contactModeStats.missed
+ $("statsMakePercent").textContent=accuracyModeStats.currentPct
+ $("statsFlushPercent").textContent=contactModeStats.currentPct
+ $("statsStreakTitle").textContent=getStreakEmojis(streakValue)
+ $("statsStreak").textContent=streakValue
+ $("statsStreakLabel").textContent="🔥".repeat(fireCount)
+ $("statsDuffs").textContent=accuracyModeStats.duffs
+ $("statsDuffMarks").textContent=accuracyModeStats.duffs ? " "+"🧻".repeat(accuracyModeStats.duffs) : ""
+ $("statsShanks").textContent=accuracyModeStats.shanks
+ $("statsShankMarks").textContent=accuracyModeStats.shanks ? " "+"😡".repeat(accuracyModeStats.shanks) : ""
+ $("statsSkulls").textContent=accuracyModeStats.skulls
+ $("statsSkullMarks").textContent=accuracyModeStats.skulls ? " "+"☠️".repeat(accuracyModeStats.skulls) : ""
+ if(rangeActive){
+  badge.className="badge random-badge"
+  badge.innerHTML='<div class="badge-content">Current Target:<br>🎯 '+formatClubLabel(currentClub)+' - '+currentDistance+'y<br>🌤️ '+formatSignedWindLabel(getSignedWindSpeed())+', '+formatRangeTemperature()+'<br><span class="random-total-line">⛳ Total Shots: '+totalShots+'</span></div>'
+ }else if(isRandom){
+  badge.className="badge random-badge"
+  badge.innerHTML='<div class="badge-content">Current Target:<br>🎯 '+formatClubLabel(currentClub)+' - '+currentDistance+'y ('+getTargetFeet(currentDistance,"wedge")+' ft)<br><span class="random-total-line">⛳ Total Shots: '+totalShots+'</span></div>'
+ }else{
+  badge.className="badge manual-badge"
+  badge.innerHTML='<div class="badge-content">🎯 Target: '+getTargetFeet(currentDistance,"wedge")+' ft<br>🥇 Up and Down: '+formatPercent(getUpAndDownValue(currentDistance,"wedge"))+'%<br><span class="random-total-line">⛳ Total Shots: '+totalShots+'</span></div>'
+ }
+ updatePendingVisuals()
+}
+function newSession(){
+ if(hasTrackedSessionData()){
+  saveSessions(loadSessions().concat([buildCurrentSessionSnapshot()]))
+ }
+ resetLiveTrackingState()
+ shotHistory=[]
+ clearPendingSelections()
+ persistLiveState()
+ if(getActivePracticeMode()==="random") pickRandomTarget()
+ else syncCurrentSelection()
+ updateStats()
+ renderPracticeMode()
+ refreshHistoryPanel()
+ requestAnimationFrame(refreshHistoryPanel)
+}
+function findLastUndoableShotIndex(){
+ const activePracticeMode=getActivePracticeMode()
+ for(let i=shotHistory.length-1;i>=0;i--){
+  const shot=shotHistory[i]
+  if((shot.mode||"manual")===activePracticeMode&&getShotTargetMode(shot)===targetSetMode) return i
+ }
+ return -1
+}
+function undoShot(){
+ const undoIndex=findLastUndoableShotIndex()
+ if(undoIndex===-1) return
+ const undoneShot=shotHistory[undoIndex]
+ shotHistory=shotHistory.filter((_,index)=>index!==undoIndex)
+ clearPendingSelections()
+ rebuildLiveTrackingFromHistory()
+ setTarget(undoneShot.club,undoneShot.distance)
+ persistLiveState()
+ updateStats()
+ renderPracticeMode()
+ refreshHistoryPanel()
+}
+function handleHistoryAction(){
+ const sel=$("historyAction")
+ const value=sel.value
+ sel.value=""
+ if(value==="delete"){
+  if(confirm("Delete all session history and reset all stats?")){
+   sessions=[]
+   TRACKER_KEYS.forEach(trackerKey=>{
+    statsMapByTracker[trackerKey]=defaultStats(trackerKey)
+    streaksByTracker[trackerKey]=defaultCounters()
+    bestStreaksByTracker[trackerKey]=defaultCounters()
+   })
+   shotHistory=[]
+   clearPendingSelections()
+   saveSessions()
+   persistLiveState()
+   updateStats()
+   renderHistory()
+  }
+ }
+ if(value==="export") exportHistoryCSV()
+}
+function getTrackerMissCsvHeaders(trackerKey,prefix){
+ return TRACKERS[trackerKey].missKeys.map(key=>prefix+" "+TRACKERS[trackerKey].missLabels[key])
+}
+function getTrackerMissCsvValues(trackerKey,missDir){
+ const normalized=createMissDir(trackerKey)
+ TRACKERS[trackerKey].missKeys.forEach(key=>{normalized[key]=Number(missDir&&missDir[key])||0})
+ return TRACKERS[trackerKey].missKeys.map(key=>normalized[key])
+}
+function formatTrackerMissSummary(trackerKey,missDir){
+ const parts=TRACKERS[trackerKey].missKeys.map(key=>TRACKERS[trackerKey].missLabels[key]+": "+(Number(missDir&&missDir[key])||0))
+ return TRACKERS[trackerKey].title+" - "+parts.join(" | ")
+}
+function exportHistoryCSV(){
+ const rows=[[
+  "Session","Date","Club","Yardage","Mode","Wind","Temp","Target ft",
+  "Made","Missed","Make %",...getTrackerMissCsvHeaders("accuracy","Accuracy"),
+  "Center","Off-Center","Flush %",...getTrackerMissCsvHeaders("contact","Contact"),
+  "Best Streak",
+  "Duffs","Shanks","Skulls"
+ ]]
+ const csvEscape=value=>{const text=String(value ?? "");return /[",\n]/.test(text) ? '"'+text.replace(/"/g,'""')+'"' : text}
+ const pushRow=values=>rows.push(values.map(csvEscape).join(","))
+ const fmt=(count,pct)=>count+" ("+pct+"%)"
+ const exportSessions=sessions.slice()
+ if(shotHistory.length){
+  exportSessions.push(buildSessionSnapshotFromShots(shotHistory))
+ }
+ exportSessions.forEach((session,index)=>{
+  const date=new Date(session.date).toLocaleDateString()
+  const sessionBestStreak=getSessionBestStreak(session)
+  const accuracyTotals={made:0,missed:0,duffs:0,shanks:0,skulls:0,missDir:createMissDir("accuracy")}
+  const contactTotals={made:0,missed:0,duffs:0,shanks:0,skulls:0,missDir:createMissDir("contact")}
+  ALL_CLUBS.forEach(club=>{
+   TARGET_SET_MODES.forEach(mode=>{
+    ALL_DISTANCES.forEach(distance=>{
+     const accuracyBucket=session.accuracyStats[mode][club][distance]
+     const contactBucket=session.contactStats[mode][club][distance]
+     const accuracyCount=(accuracyBucket.made||0)+(accuracyBucket.missed||0)
+     const contactCount=(contactBucket.made||0)+(contactBucket.missed||0)
+     if(!accuracyCount&&!contactCount) return
+     const windSummary=mode==="range" ? getRangeWindSummary(session.shots,club,distance) : ""
+     const tempSummary=mode==="range" ? getRangeTempSummary(session.shots,club,distance) : ""
+     const targetFeet=getTargetFeet(distance,mode)
+     const accuracyPct=accuracyCount?Math.round((accuracyBucket.made||0)/accuracyCount*100):0
+     const contactPct=contactCount?Math.round((contactBucket.made||0)/contactCount*100):0
+     TRACKERS.accuracy.missKeys.forEach(key=>{accuracyTotals.missDir[key]+=accuracyBucket.missDir[key]||0})
+     TRACKERS.contact.missKeys.forEach(key=>{contactTotals.missDir[key]+=contactBucket.missDir[key]||0})
+     accuracyTotals.made+=accuracyBucket.made||0
+     accuracyTotals.missed+=accuracyBucket.missed||0
+     accuracyTotals.duffs+=accuracyBucket.duffs||0
+     accuracyTotals.shanks+=accuracyBucket.shanks||0
+     accuracyTotals.skulls+=accuracyBucket.skulls||0
+     contactTotals.made+=contactBucket.made||0
+     contactTotals.missed+=contactBucket.missed||0
+     contactTotals.duffs+=contactBucket.duffs||0
+     contactTotals.shanks+=contactBucket.shanks||0
+     contactTotals.skulls+=contactBucket.skulls||0
+     pushRow([
+      index+1,date,formatClubLabel(club),distance+"yd",mode==="range"?"Range":"Wedge",windSummary,tempSummary,targetFeet!==""?targetFeet+"ft":"",
+      accuracyBucket.made||0,accuracyBucket.missed||0,accuracyPct+"%",...getTrackerMissCsvValues("accuracy",accuracyBucket.missDir),
+      contactBucket.made||0,contactBucket.missed||0,contactPct+"%",...getTrackerMissCsvValues("contact",contactBucket.missDir),
+      getSessionTargetBestStreak(session,mode,club,distance),
+      accuracyBucket.duffs||0,accuracyBucket.shanks||0,accuracyBucket.skulls||0
+     ])
+    })
+   })
+  })
+  const accuracyPct=accuracyTotals.made+accuracyTotals.missed ? Math.round(accuracyTotals.made/(accuracyTotals.made+accuracyTotals.missed)*100) : 0
+  const contactPct=contactTotals.made+contactTotals.missed ? Math.round(contactTotals.made/(contactTotals.made+contactTotals.missed)*100) : 0
+  pushRow([
+   index+1,date,"ALL","TOTAL",getModeLabel(hasRangeLabel(getSessionRangeModeLabel(session.accuracyStats))||hasRangeLabel(getSessionRangeModeLabel(session.contactStats)),hasWedgeLabel(getSessionRangeModeLabel(session.accuracyStats))||hasWedgeLabel(getSessionRangeModeLabel(session.contactStats))),
+   "","","",
+   accuracyTotals.made,accuracyTotals.missed,accuracyPct+"%",
+   ...TRACKERS.accuracy.missKeys.map(key=>fmt(accuracyTotals.missDir[key],accuracyTotals.missed?Math.round(accuracyTotals.missDir[key]/accuracyTotals.missed*100):0)),
+   contactTotals.made,contactTotals.missed,contactPct+"%",
+   ...TRACKERS.contact.missKeys.map(key=>fmt(contactTotals.missDir[key],contactTotals.missed?Math.round(contactTotals.missDir[key]/contactTotals.missed*100):0)),
+   sessionBestStreak,
+   fmt(accuracyTotals.duffs,accuracyTotals.missed?Math.round(accuracyTotals.duffs/accuracyTotals.missed*100):0),
+   fmt(accuracyTotals.shanks,accuracyTotals.missed?Math.round(accuracyTotals.shanks/accuracyTotals.missed*100):0),
+   fmt(accuracyTotals.skulls,accuracyTotals.missed?Math.round(accuracyTotals.skulls/accuracyTotals.missed*100):0)
+  ])
+ })
+ const csv=rows.join("\n")+"\n"
+ const blob=new Blob([csv],{type:"text/csv"})
+ const url=URL.createObjectURL(blob)
+ const a=document.createElement("a")
+ a.href=url
+ a.download="forestroke-history.csv"
+ a.click()
+ URL.revokeObjectURL(url)
+}
+function deleteSession(index){
+ if(!confirm("Delete this session?")) return
+ sessions=sessions.filter((_,sessionIndex)=>sessionIndex!==index)
+ saveSessions(sessions)
+ refreshHistoryPanel()
+}
+function renderHistory(){
+ sessions=loadSessions()
+ const historyNode=$("history")
+ historyNode.innerHTML=""
+ if(!sessions.length){historyNode.innerHTML='<p style="opacity:.8">No sessions yet.</p>';return}
+ sessions.slice().reverse().forEach((session,reversedIndex)=>{
+  const index=sessions.length-1-reversedIndex
+  const accuracyTotals=summarizeSessionTracker(session,"accuracy")
+  const contactTotals=summarizeSessionTracker(session,"contact")
+  const bestStreak=getSessionBestStreak(session)
+  const wrapper=document.createElement("div")
+  wrapper.className="history-wrapper"
+  const card=document.createElement("div")
+  card.className="history-card"
+  const accordion=document.createElement("div")
+  accordion.className="accordion"
+  card.innerHTML="<strong>Session "+(index+1)+"</strong><br>"+new Date(session.date).toLocaleDateString()+" - Made "+accuracyTotals.pct+"% | Flush "+contactTotals.pct+"% ("+accuracyTotals.total+" shots)"
+  card.onclick=()=>{accordion.style.display=accordion.style.display==="block"?"none":"block"}
+  const summaryRow=document.createElement("div")
+  summaryRow.className="history-block"
+  summaryRow.innerHTML="<strong>Session Totals</strong>"+
+   '<br><span class="subtle">Made: '+accuracyTotals.made+' | Missed: '+accuracyTotals.missed+'</span>'+
+   '<br><span class="subtle">Center: '+contactTotals.made+' | Off-Center: '+contactTotals.missed+'</span>'+
+   '<br><span class="subtle">Make %: '+accuracyTotals.pct+'% | Flush %: '+contactTotals.pct+'%</span>'+
+   '<br><span class="subtle">Best Streak: '+bestStreak+'</span>'+
+   '<br><span class="subtle">Duffs: '+accuracyTotals.duffs+' | Shanks: '+accuracyTotals.shanks+' | Skulls: '+accuracyTotals.skulls+'</span>'
+  accordion.appendChild(summaryRow)
+  ALL_CLUBS.forEach(club=>{
+   TARGET_SET_MODES.forEach(mode=>{
+    ALL_DISTANCES.forEach(distance=>{
+     const accuracyBucket=session.accuracyStats[mode][club][distance]
+     const contactBucket=session.contactStats[mode][club][distance]
+     const accuracyCount=(accuracyBucket.made||0)+(accuracyBucket.missed||0)
+     const contactCount=(contactBucket.made||0)+(contactBucket.missed||0)
+     if(!accuracyCount&&!contactCount) return
+     const row=document.createElement("div")
+     row.className="history-block"
+     const accuracyPct=accuracyCount?Math.round((accuracyBucket.made||0)/accuracyCount*100):0
+     const contactPct=contactCount?Math.round((contactBucket.made||0)/contactCount*100):0
+     const windSummary=mode==="range" ? getRangeWindSummary(session.shots,club,distance) : ""
+     const tempSummary=mode==="range" ? getRangeTempSummary(session.shots,club,distance) : ""
+     const targetFeet=getTargetFeet(distance,mode)
+     const upAndDown=getUpAndDownValue(distance,mode)
+     const earnedMark=mode==="wedge"&&accuracyPct>upAndDown ? " ⭐" : ""
+     row.innerHTML="<strong>"+formatClubLabel(club)+" - "+distance+" yd ("+(mode==="range"?"Range":"Wedge")+"):</strong>"+
+      (mode==="wedge" ? " "+targetFeet+"ft"+earnedMark : " Range Mode")+
+      (mode==="wedge"
+       ? '<br><span class="subtle">Up and Down: '+formatPercent(upAndDown)+'%</span>'
+       : '<br><span class="subtle">Wind: '+(windSummary||"Not recorded")+' | Temp: '+(tempSummary||"Not recorded")+'</span>')+
+      '<br><span class="subtle">Accuracy: '+(accuracyBucket.made||0)+'/'+accuracyCount+' ('+accuracyPct+'%)</span>'+
+      '<br><span class="subtle">'+formatTrackerMissSummary("accuracy",accuracyBucket.missDir)+'</span>'+
+      '<br><span class="subtle">Contact: '+(contactBucket.made||0)+'/'+contactCount+' ('+contactPct+'%)</span>'+
+      '<br><span class="subtle">'+formatTrackerMissSummary("contact",contactBucket.missDir)+'</span>'+
+      '<br><span class="subtle">Mishits - Duffs: '+(accuracyBucket.duffs||0)+' | Shanks: '+(accuracyBucket.shanks||0)+' | Skulls: '+(accuracyBucket.skulls||0)+'</span>'
+     accordion.appendChild(row)
+    })
+   })
+  })
+  const deleteButton=document.createElement("button")
+  deleteButton.textContent="🗑️ Delete Session"
+  deleteButton.onclick=event=>{event.stopPropagation();deleteSession(index)}
+  deleteButton.style="display:block;width:100%;margin-top:10px;background:#E34234;color:#000;padding:6px 10px;font-size:20px;font-weight:800;border:none;border-radius:12px;cursor:pointer;"
+  accordion.appendChild(deleteButton)
+  wrapper.append(card,accordion)
+  historyNode.appendChild(wrapper)
+ })
+}
+function initApp(){
+ TRACKER_KEYS.forEach(trackerKey=>{
+  statsMapByTracker[trackerKey]=loadTrackerStats(trackerKey)
+  streaksByTracker[trackerKey]=loadTrackerStreaks(trackerKey)
+  bestStreaksByTracker[trackerKey]=loadTrackerBestStreaks(trackerKey)
+ })
+ const shouldCompactStoredSessions=storedSessionsNeedCompaction()
+ sessions=loadSessions()
+ if(shouldCompactStoredSessions) saveSessions(sessions)
+ shotHistory=loadShotHistory()
+ rebuildLiveTrackingFromHistory()
+ const selectionState=loadSelectionState()
+ modeSelections={wedge:selectionState.wedge}
+ rangeSelections=selectionState.range
+ practiceMode=loadPracticeMode()
+ targetSetMode=loadTargetSetMode()
+ rangeWindSpeed=loadRangeWindSpeed()
+ rangeTemperature=loadRangeTemperature()
+ if(targetSetMode==="range"){
+  if(practiceMode==="manual"){
+   currentClub=RANGE_CLUBS.includes(rangeSelections.manual.club)?rangeSelections.manual.club:MODE_CONFIG.range.defaultClub
+   currentDistance=getManualRangeTargetDistance(currentClub)
+   rangeSelections.manual={club:currentClub,distance:currentDistance}
+  }else{
+   currentClub=RANGE_CLUBS.includes(rangeSelections.random.club)?rangeSelections.random.club:MODE_CONFIG.range.defaultClub
+   currentDistance=getSelectableDistances("range").includes(rangeSelections.random.distance)?rangeSelections.random.distance:MODE_CONFIG.range.defaultDistance
+   rangeSelections.random={club:currentClub,distance:currentDistance}
+  }
+ }else{
+  currentClub=modeSelections.wedge.club
+  currentDistance=modeSelections.wedge.distance
+ }
+ persistLiveState()
+ if(practiceMode==="random") pickRandomTarget()
+ else syncCurrentSelection()
+ refreshHistoryPanel()
+ renderPracticeMode()
+ updateStats()
+}
+if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",initApp)
+else initApp()
+</script>
+</body>
+</html>
+
